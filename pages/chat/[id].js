@@ -19,6 +19,9 @@ import { auth } from "@/firebaseconfig";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { doc } from "firebase/firestore";
 import getOtherEmail from "@/getOtherEmail";
+import { useState } from "react";
+import { addDoc } from "firebase/firestore";
+import { serverTimestamp } from "firebase/firestore";
 
 const Topbar = ({ email }) => {
   return (
@@ -29,11 +32,27 @@ const Topbar = ({ email }) => {
   );
 };
 
-const Bottombar = () => {
+const Bottombar = ({ id, user }) => {
+  const [input, setInput] = useState("");
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    await addDoc(collection(db, `chats/${id}/messages`), {
+      text: input,
+      sender: user.email,
+      timestamp: serverTimestamp(),
+    });
+    setInput("");
+  };
+
   return (
-    <FormControl p={3}>
-      <Input placeholder="Type a message..." />
-      <Button type="submit" hidden autoComplete="off">
+    <FormControl p={3} onSubmit={sendMessage} as="form">
+      <Input
+        autoComplete="off"
+        placeholder="Type a message..."
+        onChange={(e) => setInput(e.target.value)}
+        value={input}
+      />
+      <Button type="submit" hidden>
         Submit
       </Button>
     </FormControl>
@@ -80,13 +99,13 @@ export default function Chat() {
           direction="column"
           pt={4}
           mx={5}
-          overflowx="scroll"
+          overflowY="auto" // Add this style
           sx={{ scrollbarwidth: "none`" }}
         >
           {getMessages()}
         </Flex>
 
-        <Bottombar />
+        <Bottombar id={id} user={user} />
       </Flex>
     </Flex>
   );
